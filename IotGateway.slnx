@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/IotGateway.Worker/IotGateway.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/IotGateway.Tests/IotGateway.Tests.csproj" />
+  </Folder>
+</Solution>
