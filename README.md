@@ -14,9 +14,9 @@ En Windows, permitir el puerto 5000 en el firewall para que los ESP32 puedan con
 ## Endpoints
 | Metodo | Ruta | Descripcion |
 |---|---|---|
-| POST | `/api/devices/{id}/report` | El ESP32 reporta y recibe comandos pendientes |
-| GET | `/api/devices` | Lista dispositivos (`active` si lastSeen < 15 s) |
-| GET | `/api/devices/{id}` | Detalle y ultimas lecturas |
-| POST | `/api/devices/{id}/commands` | Encola un comando (`rgb_led`: `#RRGGBB`, `motor`: -100..100) |
+| POST | `/api/dispositivos/{id}/reporte` | El ESP32 reporta y recibe comandos pendientes |
+| GET | `/api/dispositivos` | Lista dispositivos (`activo` si `ultimaVez` < 15 s) |
+| GET | `/api/dispositivos/{id}` | Detalle y ultimas lecturas |
+| POST | `/api/dispositivos/{id}/comandos` | Encola un comando (`led_rgb`: `#RRGGBB`, `motor`: -100..100) |
 
-El estado vive en memoria: al reiniciar, los ESP32 se registran solos en su siguiente `report`.
+El estado vive en memoria: al reiniciar, los ESP32 se registran solos en su siguiente `reporte`.

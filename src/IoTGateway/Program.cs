@@ -4,16 +4,16 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<DeviceRegistry>();
+builder.Services.AddSingleton<RegistroDispositivos>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
 {
-    o.SwaggerDoc("v1", new OpenApiInfo { Title = "IoT Gateway API", Version = "1.0.0" });
+    o.SwaggerDoc("v1", new OpenApiInfo { Title = "API del Gateway IoT", Version = "1.0.0" });
     o.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.ApiKey,
         In = ParameterLocation.Header,
-        Name = ApiKeyMiddleware.HeaderName
+        Name = MiddlewareApiKey.NombreHeader
     });
     o.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -25,56 +25,56 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseMiddleware<ApiKeyMiddleware>();
+app.UseMiddleware<MiddlewareApiKey>();
 
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
-var api = app.MapGroup("/api/devices");
+var api = app.MapGroup("/api/dispositivos");
 
-IResult BadId() => Results.BadRequest(new ErrorDto("Id invalido (a-z, 0-9 y '-', maximo 32 caracteres)"));
-IResult NotFound(string id) => Results.NotFound(new ErrorDto($"El dispositivo '{id}' no existe"));
+IResult IdInvalido() => Results.BadRequest(new ErrorDto("Id invalido (a-z, 0-9 y '-', maximo 32 caracteres)"));
+IResult NoEncontrado(string id) => Results.NotFound(new ErrorDto($"El dispositivo '{id}' no existe"));
 
-api.MapPost("/{id}/report", (string id, ReportRequest? request, DeviceRegistry registry, ILogger<Program> log) =>
+api.MapPost("/{id}/reporte", (string id, SolicitudReporte? solicitud, RegistroDispositivos registro, ILogger<Program> log) =>
 {
-    if (!DeviceRegistry.IsValidId(id)) return BadId();
-    if (request is null) return Results.BadRequest(new ErrorDto("Body invalido"));
+    if (!RegistroDispositivos.EsIdValido(id)) return IdInvalido();
+    if (solicitud is null) return Results.BadRequest(new ErrorDto("Body invalido"));
 
-    var error = registry.Report(id, request, out var pending);
+    var error = registro.Reportar(id, solicitud, out var pendientes);
     if (error is not null) return Results.BadRequest(new ErrorDto(error));
 
-    log.LogInformation("Report de {Id}: {Count} comando(s) entregado(s)", id, pending.Count);
-    return Results.Ok(new ReportResponse(pending));
+    log.LogInformation("Reporte de {Id}: {Cantidad} comando(s) entregado(s)", id, pendientes.Count);
+    return Results.Ok(new RespuestaReporte(pendientes));
 })
-.WithName("reportDevice")
-.Produces<ReportResponse>()
+.WithName("reportarDispositivo")
+.Produces<RespuestaReporte>()
 .Produces<ErrorDto>(StatusCodes.Status400BadRequest);
 
-api.MapGet("/", (DeviceRegistry registry) => Results.Ok(registry.List()))
-    .WithName("listDevices")
-    .Produces<List<DeviceDto>>();
+api.MapGet("/", (RegistroDispositivos registro) => Results.Ok(registro.Listar()))
+    .WithName("listarDispositivos")
+    .Produces<List<DispositivoDto>>();
 
-api.MapGet("/{id}", (string id, DeviceRegistry registry) =>
-    registry.Get(id) is { } device ? Results.Ok(device) : NotFound(id))
-    .WithName("getDevice")
-    .Produces<DeviceDto>()
+api.MapGet("/{id}", (string id, RegistroDispositivos registro) =>
+    registro.Obtener(id) is { } dispositivo ? Results.Ok(dispositivo) : NoEncontrado(id))
+    .WithName("obtenerDispositivo")
+    .Produces<DispositivoDto>()
     .Produces<ErrorDto>(StatusCodes.Status404NotFound);
 
-api.MapPost("/{id}/commands", (string id, Command? command, DeviceRegistry registry, ILogger<Program> log) =>
+api.MapPost("/{id}/comandos", (string id, Comando? comando, RegistroDispositivos registro, ILogger<Program> log) =>
 {
-    if (command is null || string.IsNullOrEmpty(command.Target))
-        return Results.BadRequest(new ErrorDto("Body invalido: se requiere 'target' y 'value'"));
+    if (comando is null || string.IsNullOrEmpty(comando.Destino))
+        return Results.BadRequest(new ErrorDto("Body invalido: se requiere 'destino' y 'valor'"));
 
-    var result = registry.Enqueue(id, command, out var error);
-    switch (result)
+    var resultado = registro.EncolarComando(id, comando, out var error);
+    switch (resultado)
     {
-        case DeviceRegistry.EnqueueResult.NotFound: return NotFound(id);
-        case DeviceRegistry.EnqueueResult.Invalid: return Results.BadRequest(new ErrorDto(error!));
+        case RegistroDispositivos.ResultadoEncolado.NoEncontrado: return NoEncontrado(id);
+        case RegistroDispositivos.ResultadoEncolado.Invalido: return Results.BadRequest(new ErrorDto(error!));
         default:
-            log.LogInformation("Comando encolado para {Id}: {Target}={Value}", id, command.Target, command.Value);
+            log.LogInformation("Comando encolado para {Id}: {Destino}={Valor}", id, comando.Destino, comando.Valor);
             return Results.Accepted();
     }
 })
-.WithName("sendCommand")
+.WithName("enviarComando")
 .Produces(StatusCodes.Status202Accepted)
 .Produces<ErrorDto>(StatusCodes.Status400BadRequest)
 .Produces<ErrorDto>(StatusCodes.Status404NotFound);
