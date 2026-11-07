@@ -1,4 +1,6 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using IoTGateway.Models;
 
 namespace IoTGateway.Repositories
@@ -6,35 +8,57 @@ namespace IoTGateway.Repositories
     public class InMemoryDeviceRepository : IDeviceRepository
     {
         private readonly ConcurrentDictionary<string, DeviceRegistrationDto> _devices = new();
-        private readonly ConcurrentDictionary<string, object> _sensorValues = new();
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, double>> _telemetry = new();
 
-        public void SaveDevice(DeviceRegistrationDto device)
+        // Nueva cola de comandos concurrente por dispositivo
+        private readonly ConcurrentDictionary<string, ConcurrentQueue<CommandDto>> _commandQueues = new();
+
+        public void SaveOrUpdateDevice(DeviceRegistrationDto deviceDto)
         {
-            _devices[device.DeviceId] = device;
+            _devices[deviceDto.DeviceId] = deviceDto;
         }
 
-        public IEnumerable<DeviceRegistrationDto> GetAllDevices()
-        {
-            return _devices.Values;
-        }
-
-        public DeviceRegistrationDto? GetDeviceById(string deviceId)
+        public DeviceRegistrationDto? GetDevice(string deviceId)
         {
             _devices.TryGetValue(deviceId, out var device);
             return device;
         }
 
-        public void SetTelemetry(string deviceId, string componentId, object value)
+        public IEnumerable<DeviceRegistrationDto> GetAllDevices() => _devices.Values;
+
+        public void UpdateTelemetry(string deviceId, string componentId, double value)
         {
-            string key = $"{deviceId}:{componentId}";
-            _sensorValues[key] = value;
+            var deviceTelemetry = _telemetry.GetOrAdd(deviceId, _ => new ConcurrentDictionary<string, double>());
+            deviceTelemetry[componentId] = value;
         }
 
-        public object? GetTelemetry(string deviceId, string componentId)
+        public object? GetSensorValue(string deviceId, string componentId)
         {
-            string key = $"{deviceId}:{componentId}";
-            _sensorValues.TryGetValue(key, out var value);
-            return value;
+            if (_telemetry.TryGetValue(deviceId, out var deviceTelemetry))
+            {
+                if (deviceTelemetry.TryGetValue(componentId, out var val))
+                    return val;
+            }
+            return null;
+        }
+
+        public void EnqueueCommand(string deviceId, CommandDto command)
+        {
+            var queue = _commandQueues.GetOrAdd(deviceId, _ => new ConcurrentQueue<CommandDto>());
+            queue.Enqueue(command);
+        }
+
+        public IEnumerable<CommandDto> GetAndClearPendingCommands(string deviceId)
+        {
+            var commands = new List<CommandDto>();
+            if (_commandQueues.TryGetValue(deviceId, out var queue))
+            {
+                while (queue.TryDequeue(out var cmd))
+                {
+                    commands.Add(cmd);
+                }
+            }
+            return commands;
         }
     }
 }

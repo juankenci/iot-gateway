@@ -8,32 +8,40 @@ namespace IoTGateway.Controllers
     [Route("api/esp32")]
     public class Esp32Controller : ControllerBase
     {
-        private readonly IDeviceService _deviceService;
+        private readonly ITelemetryService _telemetryService;
+        private readonly ICommandService _commandService;
 
-        public Esp32Controller(IDeviceService deviceService)
+        public Esp32Controller(ITelemetryService telemetryService, ICommandService commandService)
         {
-            _deviceService = deviceService;
+            _telemetryService = telemetryService;
+            _commandService = commandService;
         }
 
         [HttpPost("register")]
-        public IActionResult Register([FromBody] DeviceRegistrationDto dto)
+        public IActionResult RegisterDevice([FromBody] DeviceRegistrationDto dto)
         {
-            var success = _deviceService.RegisterDevice(dto);
-            if (!success)
-                return BadRequest(new { message = "El DeviceId es obligatorio." });
-
+            _telemetryService.RegisterDevice(dto);
             return Ok(new { message = $"Dispositivo {dto.DeviceId} registrado exitosamente." });
         }
 
         [HttpPost("{deviceId}/telemetry/{componentId}")]
-        public IActionResult PostTelemetry(string deviceId, string componentId, [FromBody] TelemetryDto dto)
+        public IActionResult PostTelemetry(string deviceId, string componentId, [FromBody] TelemetryPayload payload)
         {
-            var updated = _deviceService.UpdateTelemetry(deviceId, componentId, dto.Value);
-            if (!updated)
-                return NotFound(new { message = "Dispositivo no registrado en el Gateway." });
+            _telemetryService.RecordTelemetry(deviceId, componentId, payload.Value);
+            return Ok(new { message = "Telemetría recibida correctamente." });
+        }
 
-            return Ok(new { message = "Telemetría actualizada correctamente." });
+        // Polling de Comandos desde el ESP32
+        [HttpGet("{deviceId}/commands/pending")]
+        public IActionResult GetPendingCommands(string deviceId)
+        {
+            var commands = _commandService.FetchPendingCommands(deviceId);
+            return Ok(commands);
         }
     }
 
+    public class TelemetryPayload
+    {
+        public double Value { get; set; }
+    }
 }

@@ -8,7 +8,8 @@ builder.Services.AddControllers();
 
 // Inyección de Dependencias (Arquitectura por Capas)
 builder.Services.AddSingleton<IDeviceRepository, InMemoryDeviceRepository>();
-builder.Services.AddScoped<IDeviceService, DeviceService>();
+builder.Services.AddScoped<ITelemetryService, TelemetryService>();
+builder.Services.AddScoped<ICommandService, CommandService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
