@@ -23,10 +23,18 @@ namespace IoTGateway.Controllers
         [HttpGet("devices/{deviceId}/sensors/{sensorId}")]
         public IActionResult GetSensorValue(string deviceId, string sensorId)
         {
-            var val = _telemetryService.GetSensorValue(deviceId, sensorId);
-            if (val == null) return NotFound(new { message = "Sensor o lectura no encontrada." });
-            return Ok(new { deviceId, sensorId, value = val });
+            var l = _telemetryService.GetSensorValue(deviceId, sensorId);
+            if (l == null) return NotFound(new { message = "Sensor o lectura no encontrada." });
+            return Ok(new { deviceId, sensorId, value = l.Valor, timestamp = l.Fecha });
         }
+        [HttpGet("devices/{deviceId}/components/{componentId}/file")]
+        public IActionResult GetFile(string deviceId, string componentId)
+        {
+            var a = _telemetryService.GetFile(deviceId, componentId);
+            if (a == null) return NotFound(new { message = "Todavía no hay archivo." });
+            return File(a.Contenido, a.ContentType);
+        }
+
 
         // Enviar comando a un actuador del ESP32
         [HttpPost("devices/{deviceId}/commands")]

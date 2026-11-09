@@ -10,6 +10,8 @@ namespace IoTGateway.Models
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public DataType DataType { get; set; }                 // Float, Integer, Boolean, etc.
         public string Unit { get; set; } = string.Empty;       // "°C", "%", etc.
+
+        public List<string> Actions { get; set; } = new();   // Ej: ["CAPTURE"]
     }
 
     public enum ComponentType
@@ -23,6 +25,7 @@ namespace IoTGateway.Models
         Float,
         Integer,
         Boolean,
-        String
+        String,
+        File
     }
 }

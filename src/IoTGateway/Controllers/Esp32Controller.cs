@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using IoTGateway.Models;
 using IoTGateway.Services;
+using System.Text.Json;
 
 namespace IoTGateway.Controllers
 {
@@ -27,9 +28,23 @@ namespace IoTGateway.Controllers
         [HttpPost("{deviceId}/telemetry/{componentId}")]
         public IActionResult PostTelemetry(string deviceId, string componentId, [FromBody] TelemetryPayload payload)
         {
+            if (payload.Value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+                throw new ArgumentException("Falta 'value'.");
             _telemetryService.RecordTelemetry(deviceId, componentId, payload.Value);
             return Ok(new { message = "Telemetría recibida correctamente." });
         }
+
+        [HttpPost("{deviceId}/components/{componentId}/file")]
+        [RequestSizeLimit(TelemetryService.MaxBytesArchivo)]
+        public async Task<IActionResult> PostFile(string deviceId, string componentId)
+        {
+            using var ms = new MemoryStream();
+            await Request.Body.CopyToAsync(ms);
+            _telemetryService.SaveFile(deviceId, componentId, ms.ToArray(),
+                Request.ContentType ?? "application/octet-stream");
+            return Ok(new { message = "Archivo recibido.", bytes = ms.Length });
+        }
+
 
         // Polling de Comandos desde el ESP32
         [HttpGet("{deviceId}/commands/pending")]
@@ -42,6 +57,6 @@ namespace IoTGateway.Controllers
 
     public class TelemetryPayload
     {
-        public double Value { get; set; }
+        public JsonElement Value { get; set; }
     }
 }

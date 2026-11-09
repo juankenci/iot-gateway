@@ -1,0 +1,21 @@
+{
+  "deviceId": "esp32-cam",
+  "name": "ESP32-CAM Seguridad",
+  "components": [
+    {
+      "componentId": "distance_sensor",
+      "type": "Sensor",
+      "dataType": "Float",
+      "unit": "cm"
+    },
+    {
+      "componentId": "camera",
+      "type": "Actuator",
+      "dataType": "File",
+      "unit": "",
+      "actions": [
+        "CAPTURE"
+      ]
+    }
+  ]
+}

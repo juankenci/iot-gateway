@@ -1,6 +1,7 @@
 using IoTGateway.Middleware;
 using IoTGateway.Repositories;
 using IoTGateway.Services;
+using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,19 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseExceptionHandler(a => a.Run(async ctx =>
+{
+    var ex = ctx.Features.Get<IExceptionHandlerFeature>()?.Error;
+    ctx.Response.StatusCode = ex switch
+    {
+        KeyNotFoundException => StatusCodes.Status404NotFound,
+        ArgumentException => StatusCodes.Status400BadRequest,
+        _ => StatusCodes.Status500InternalServerError
+    };
+    var mensaje = ex is KeyNotFoundException or ArgumentException ? ex.Message : "Error interno";
+    await ctx.Response.WriteAsJsonAsync(new { message = mensaje });
+}));
+
 app.UseMiddleware<MiddlewareApiKey>();
 app.UseAuthorization();
 app.MapControllers();

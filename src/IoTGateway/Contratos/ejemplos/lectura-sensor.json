@@ -1,0 +1,6 @@
+{
+  "deviceId": "esp32-cam",
+  "sensorId": "distance_sensor",
+  "value": 42.5,
+  "timestamp": "2026-11-09T14:00:00Z"
+}

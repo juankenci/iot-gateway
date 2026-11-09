@@ -8,16 +8,21 @@ namespace IoTGateway.Repositories
     public class InMemoryDeviceRepository : IDeviceRepository
     {
         private readonly ConcurrentDictionary<string, DeviceRegistrationDto> _devices = new();
-        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, double>> _telemetry = new();
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Lectura>> _telemetry = new();
+        private readonly ConcurrentDictionary<string, Archivo> _archivos = new();
 
         // Nueva cola de comandos concurrente por dispositivo
         private readonly ConcurrentDictionary<string, ConcurrentQueue<CommandDto>> _commandQueues = new();
 
-        public void SaveOrUpdateDevice(DeviceRegistrationDto deviceDto)
+        public void SaveOrUpdateDevice(DeviceRegistrationDto d)
         {
-            _devices[deviceDto.DeviceId] = deviceDto;
+            d.LastSeen = DateTime.UtcNow;
+            _devices[d.DeviceId] = d;
         }
-
+        public void Touch(string deviceId)
+        {
+            if (_devices.TryGetValue(deviceId, out var d)) d.LastSeen = DateTime.UtcNow;
+        }
         public DeviceRegistrationDto? GetDevice(string deviceId)
         {
             _devices.TryGetValue(deviceId, out var device);
@@ -26,21 +31,17 @@ namespace IoTGateway.Repositories
 
         public IEnumerable<DeviceRegistrationDto> GetAllDevices() => _devices.Values;
 
-        public void UpdateTelemetry(string deviceId, string componentId, double value)
+        public void UpdateTelemetry(string deviceId, string componentId, object value)
         {
-            var deviceTelemetry = _telemetry.GetOrAdd(deviceId, _ => new ConcurrentDictionary<string, double>());
-            deviceTelemetry[componentId] = value;
+            var t = _telemetry.GetOrAdd(deviceId, _ => new ConcurrentDictionary<string, Lectura>());
+            t[componentId] = new Lectura(value, DateTime.UtcNow);
         }
 
-        public object? GetSensorValue(string deviceId, string componentId)
-        {
-            if (_telemetry.TryGetValue(deviceId, out var deviceTelemetry))
-            {
-                if (deviceTelemetry.TryGetValue(componentId, out var val))
-                    return val;
-            }
-            return null;
-        }
+        public Lectura? GetSensorValue(string deviceId, string componentId) => _telemetry.TryGetValue(deviceId, out var t) && t.TryGetValue(componentId, out var l) ? l : null;
+
+        public void SaveFile(string deviceId, string componentId, Archivo a) => _archivos[$"{deviceId}/{componentId}"] = a;
+        
+        public Archivo? GetFile(string deviceId, string componentId) => _archivos.TryGetValue($"{deviceId}/{componentId}", out var a) ? a : null;
 
         public void EnqueueCommand(string deviceId, CommandDto command)
         {

@@ -1,0 +1,9 @@
+[
+  {
+    "commandId": "1b063eb1-c24b-4bc6-b2d4-e68cfedeef23",
+    "componentId": "camera",
+    "action": "CAPTURE",
+    "payload": null,
+    "createdAt": "2026-11-09T14:00:00Z"
+  }
+]
