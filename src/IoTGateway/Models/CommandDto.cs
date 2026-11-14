@@ -9,5 +9,6 @@ namespace IoTGateway.Models
         public string Action { get; set; } = string.Empty;       // Ej: "SET", "TOGGLE", "READ"
         public object? Payload { get; set; }                     // Ej: true, 50, o null
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+             // Ej: Zona en donde esta conectado
     }
 }

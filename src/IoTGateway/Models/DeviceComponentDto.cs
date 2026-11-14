@@ -11,6 +11,7 @@ namespace IoTGateway.Models
         public DataType DataType { get; set; }                 // Float, Integer, Boolean, etc.
         public string Unit { get; set; } = string.Empty;       // "°C", "%", etc.
 
+        public string Location { get; set; } = string.Empty;   // String ubicacion (Cocina, baño, habitacion)
         public List<string> Actions { get; set; } = new();   // Ej: ["CAPTURE"]
     }
 
