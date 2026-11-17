@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7DA42766-210
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IoTGateway", "src\IoTGateway\IoTGateway.csproj", "{C72723C8-7A63-41E4-8483-BA09CAF4F624}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IoTGateway.Mcp", "src\IoTGateway.Mcp\IoTGateway.Mcp.csproj", "{46C78DD2-0A67-4AF5-9E3E-22B0D67F67C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,8 +22,13 @@ Global
 		{C72723C8-7A63-41E4-8483-BA09CAF4F624}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C72723C8-7A63-41E4-8483-BA09CAF4F624}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C72723C8-7A63-41E4-8483-BA09CAF4F624}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46C78DD2-0A67-4AF5-9E3E-22B0D67F67C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46C78DD2-0A67-4AF5-9E3E-22B0D67F67C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46C78DD2-0A67-4AF5-9E3E-22B0D67F67C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46C78DD2-0A67-4AF5-9E3E-22B0D67F67C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C72723C8-7A63-41E4-8483-BA09CAF4F624} = {7DA42766-2102-4E54-826F-12512BEAAA82}
+		{46C78DD2-0A67-4AF5-9E3E-22B0D67F67C1} = {7DA42766-2102-4E54-826F-12512BEAAA82}
 	EndGlobalSection
 EndGlobal
